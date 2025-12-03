@@ -4,7 +4,7 @@ import sys
 
 # --- CAU HINH DIA CHI ZMQ ---
 FRONTEND_ADDR = "ipc://test.ipc"  # ROUTER nhận từ Modbus Reader
-COMMAND_ADDR = "tcp://*:5556"  # PULL nhận lệnh điều khiển
+COMMAND_ADDR = "ipc://command.ipc"  # PULL nhận lệnh điều khiển
 BROKER_DATA_STREAM = "ipc://data_stream.ipc"  # PUSH gửi dữ liệu tới Processer (ĐÃ THÊM)
 
 # --- CAU HINH ID ---
