@@ -79,36 +79,20 @@ Bạn cần đảm bảo file thực thi `modbus_reader` đã được tạo và
 
 ### 4\. Chuẩn bị Script Khởi động
 
-Đảm bảo file `start_system.sh` (hoặc `run_all.sh`) đã được sửa để sử dụng đường dẫn tuyệt đối đến `venv/bin/python` và có quyền thực thi.
+Đảm bảo file run_all.sh đã được sửa để sử dụng đường dẫn tuyệt đối đến `venv/bin/python` và có quyền thực thi.
 
 ```bash
-chmod +x start_system.sh
+chmod +x run_all.sh
 ```
 
 ## 🏃 Vận Hành Hệ thống
 
 ### A. Khởi động Tự động (Production/Service)
 
-Đây là phương pháp được khuyến nghị để hệ thống chạy độc lập, tự động và bền bỉ.
-
-1.  **Cài đặt và Chạy Systemd Service:** (Tham khảo file `datarunner.service` và hướng dẫn Systemd chi tiết).
-    ```bash
-    # Sau khi tạo file .service và đặt tên là datarunner.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable datarunner.service
-    sudo systemctl start datarunner.service
-    ```
-2.  **Xem log:**
-    ```bash
-    sudo journalctl -u datarunner.service -f
-    ```
-
-### B. Khởi động Thủ công (Debug)
-
 Chạy script trực tiếp trong terminal để xem output ngay lập tức (sẽ block terminal):
 
 ```bash
-./start_system.sh
+./run_all.sh
 ```
 
   * **Dừng:** Nhấn `Ctrl+C` để kích hoạt hàm `cleanup` và dừng tất cả tiến trình con một cách an toàn.
