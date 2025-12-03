@@ -7,37 +7,43 @@
 #include "modbusStack/mb_master.h"
 #include "zeroMQ/ZMQClient.h"
 
+// Sử dụng namespace std để tránh viết std:: liên tục trong file header
 using namespace std;
 
 class ModbusReaderApp {
  private:
-  // --- Hằng số cấu hình ---
+  // --- 1. HẰNG SỐ (Khởi tạo trước) ---
+  // Đảm bảo là static constexpr để được khởi tạo trước mọi thành viên khác
   static constexpr const char* BROKER_ADDR = "ipc://test.ipc";
   static constexpr int SEND_INTERVAL_MS = 2000;
   static constexpr int RECONNECT_DELAY_S = 5;
-  const std::string CLIENT_ID = "ModbusReader_01";  // Client ID cho ZMQ
+  const std::string CLIENT_ID = "ModbusReader_01";  // ID bắt buộc cho ZMQClient
 
-  // --- Thành viên lớp ---
+  // --- 2. THÀNH VIÊN LỚP ---
+  // Khai báo thành viên ZMQ và Modbus trước để thứ tự khởi tạo được đảm bảo.
+  // Lỗi bad_alloc nằm ở đây nếu chúng không được khai báo đúng.
   ZMQClient m_zmqClient;
   ModbusMaster m_modbusMaster;
 
+  // Các thành viên cho đa luồng và trạng thái
   std::thread m_senderThread;
   std::mutex m_mutex;
-
   bool m_stopFlag;
   bool m_isRunning;
 
-  // --- Hàm xử lý nội bộ ---
+  // --- 3. CÁC HÀM HỖ TRỢ ---
   void senderRoutine();
   bool attemptReconnect();
   std::string readModbusData();
 
  public:
-  // Constructor / Destructor
+  // Constructor (đã được định nghĩa trong .cpp)
   ModbusReaderApp();
+
+  // Destructor (đã được định nghĩa trong .cpp)
   ~ModbusReaderApp();
 
-  // API công khai
+  // Các hàm công khai
   bool start();
   void stop();
   bool isRunning();

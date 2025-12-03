@@ -60,16 +60,15 @@ sleep 0.5
 
 # 3. Chạy Data Processer (Python) trong nền
 echo "3. Khởi động Data Processer (processer.py) trong nền..."
-python src/dataLogger.py &
+python src/processer.py &
 PROCESSER_PID=$!
 echo "   [INFO] Processer đã khởi động. PID: $PROCESSER_PID"
 
-
-# # 4. Chạy Command Sender (Python Loop) trong nền
-# echo "4. Khởi động Command Sender Loop (command_sender.py) trong nền..."
-# python src/command_sender.py &
-# SENDER_PID=$!
-# echo "   [INFO] Sender đã khởi động. PID: $SENDER_PID"
+# 4. Chạy Command Sender (Python Loop) trong nền
+echo "4. Khởi động Command Sender Loop (command_sender.py) trong nền..."
+python src/command_sender.py &
+SENDER_PID=$!
+echo "   [INFO] Sender đã khởi động. PID: $SENDER_PID"
 
 # 5. Chạy Modbus Reader (C++) trong nền
 echo "5. Khởi động Modbus Reader (./modbus_reader) trong nền..."
