@@ -22,3 +22,19 @@ std::string ModbusMaster::dataString4Test() {
   // Placeholder for reading data from Modbus devices
   return "Modbus Data_test for ZMQ";
 }
+
+std::string ModbusMaster::dataString4TestDB() {
+  // Lấy thời gian hiện tại
+  std::time_t t = std::time(nullptr);
+  std::tm* tm_ptr = std::localtime(&t);
+
+  // Tạo chuỗi timestamp (YYYY-MM-DD HH:MM:SS)
+  char buf[20];
+  std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tm_ptr);
+
+  // Tạo dữ liệu Modbus giả lập dạng key=value;key=value;...
+  std::stringstream ss;
+  ss << "timestamp=" << buf << "; voltage=230.5; current=5.2; power=1200.0;";
+
+  return ss.str();
+}

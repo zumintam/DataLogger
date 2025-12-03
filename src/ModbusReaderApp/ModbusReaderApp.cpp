@@ -140,5 +140,5 @@ bool ModbusReaderApp::attemptReconnect() {
 
 string ModbusReaderApp::readModbusData() {
   // Gọi API ModbusMaster
-  return m_modbusMaster.dataString4Test();
+  return m_modbusMaster.dataString4TestDB();
 }

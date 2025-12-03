@@ -95,6 +95,13 @@ Chạy script trực tiếp trong terminal để xem output ngay lập tức (s�
 ./run_all.sh
 ```
 
+Xem database 
+sqlite3 data_log.db
+sqlite> .tables
+sqlite> SELECT * FROM <tên_bảng> ORDER BY timestamp DESC LIMIT 5;
+sqlite> .quit
+
+
   * **Dừng:** Nhấn `Ctrl+C` để kích hoạt hàm `cleanup` và dừng tất cả tiến trình con một cách an toàn.
 
 -----

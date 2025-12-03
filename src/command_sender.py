@@ -6,7 +6,8 @@ from datetime import datetime
 import sys
 
 # --- CẤU HÌNH ZMQ ---
-BROKER_DATA_STREAM = "ipc://data_stream.ipc"  # PHẢI TRÙNG VỚI địa chỉ PUSH của Broker
+# PHẢI TRÙNG VỚI địa chỉ PUSH của Broker
+BROKER_DATA_STREAM = "ipc://data_stream.ipc"
 
 # --- CẤU HÌNH DATABASE ---
 DB_FILE = "data_log.db"
@@ -45,51 +46,75 @@ def initialize_db(db_conn):
 
 def parse_data(data_string: str) -> dict:
     """
-    Phân tích chuỗi dữ liệu Modbus (ví dụ: 'Pwr:450kW|Temp:35.21C').
-    Trả về một dictionary các cặp key-value số thực.
+    Phân tích chuỗi dữ liệu Modbus (Ví dụ: 'timestamp=...; voltage=...; power=...;').
+    Trả về một dictionary các cặp key-value.
     """
     parsed_data = {}
 
-    # Tách chuỗi bằng dấu '|'
-    parts = data_string.split("|")
+    # 1. Tách chuỗi bằng dấu chấm phẩy (;). Lọc bỏ các phần tử trống (do dấu ; ở cuối).
+    parts = [p.strip() for p in data_string.split(";") if p.strip()]
 
     for part in parts:
-        # Tách từng cặp key:value bằng dấu ':'
-        if ":" in part:
+        # 2. Tách từng cặp key=value bằng dấu bằng (=)
+        if "=" in part:
             try:
-                key, value_str = part.split(":", 1)
+                key, value_str = part.split("=", 1)
                 key = key.strip()
+                value_str = value_str.strip()
 
-                # Loại bỏ đơn vị (như 'kW', 'C') và chuyển đổi thành số thực (REAL)
-                # Sử dụng regex để chỉ giữ lại số, dấu chấm và dấu trừ
-                numeric_value_str = re.sub(r"[^0-9\.\-]+", "", value_str)
-
-                if numeric_value_str:
-                    numeric_value = float(numeric_value_str)
+                # 3. Cố gắng chuyển đổi thành số thực (REAL)
+                try:
+                    # Nếu là số, lưu dưới dạng float
+                    numeric_value = float(value_str)
                     parsed_data[key] = numeric_value
-            except ValueError:
-                # Bỏ qua nếu giá trị không phải là số hợp lệ
+                except ValueError:
+                    # Nếu không phải số (ví dụ: timestamp), lưu dưới dạng chuỗi
+                    parsed_data[key] = value_str
+            except Exception:
+                # Bỏ qua nếu có lỗi phân tích cú pháp bất thường
                 pass
     return parsed_data
 
 
 def insert_data(db_conn, client_id: str, data: dict):
-    """Chèn từng cặp key-value đã phân tích vào bảng sensor_data."""
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    """
+    Chèn từng cặp key-value đã phân tích vào bảng sensor_data,
+    sử dụng timestamp từ dữ liệu Modbus cho cột DATETIME.
+    Chỉ chèn các giá trị là số (REAL).
+    """
+
+    # Lấy timestamp từ dữ liệu, mặc định là thời gian hiện tại nếu không có
+    modbus_timestamp = data.get(
+        "timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+
+    # Nếu timestamp trong data là số (do parse_data) hoặc không phải chuỗi, sử dụng thời gian hiện tại
+    if not isinstance(modbus_timestamp, str):
+        modbus_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Đếm số lượng bản ghi mới
+    new_records = 0
     cursor = db_conn.cursor()
 
-    # Duyệt qua từng cặp (key, value) đã được phân tích
+    # Duyệt qua từng cặp (key, value)
     for key, value in data.items():
-        cursor.execute(
-            """
-            INSERT INTO sensor_data (timestamp, client_id, data_key, data_value)
-            VALUES (?, ?, ?, ?)
-        """,
-            (current_time, client_id, key, value),
-        )
+        # Bỏ qua trường 'timestamp' vì nó đã được xử lý
+        if key == "timestamp":
+            continue
+
+        # Chỉ chèn dữ liệu số (REAL) vì cột data_value là REAL
+        if isinstance(value, (int, float)):
+            cursor.execute(
+                """
+                INSERT INTO sensor_data (timestamp, client_id, data_key, data_value)
+                VALUES (?, ?, ?, ?)
+            """,
+                (modbus_timestamp, client_id, key, value),
+            )
+            new_records += 1
 
     db_conn.commit()
-    print(f"      [DB LOG] Đã ghi {len(data)} trường dữ liệu vào DB.")
+    print(f"      [DB LOG] Đã ghi {new_records} trường dữ liệu vào DB.")
 
 
 # =================================================================
@@ -103,6 +128,7 @@ def run_data_logger():
 
     try:
         # 1. Khởi tạo Database
+        # Đây là nơi lỗi 'database disk image is malformed' xảy ra nếu file bị hỏng
         conn = sqlite3.connect(DB_FILE)
         initialize_db(conn)
 
@@ -160,6 +186,7 @@ def run_data_logger():
     except zmq.error.ContextTerminated:
         print("\n[LOGGER] Context ZeroMQ đã bị chấm dứt.")
     except Exception as e:
+        # Lỗi FATAL thường là database disk image is malformed
         print(f"[FATAL] Lỗi không mong muốn: {e}")
     finally:
         if "data_logger" in locals() and not data_logger.closed:

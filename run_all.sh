@@ -49,7 +49,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 2. Chạy Broker ZeroMQ (Python) trong nền
+# 2. Chạy Broker ZeroMQ (Python) trong nềnrock
+
 echo "2. Khởi động Broker ZeroMQ (broker.py) trong nền..."
 python src/broker.py &
 BROKER_PID=$!
@@ -58,12 +59,11 @@ echo "   [INFO] Broker đã khởi động. PID: $BROKER_PID"
 # Cho Broker một thời gian ngắn để bind TẤT CẢ socket (0.5 giây)
 sleep 0.5 
 
-# 3. Chạy Data Processer (Python) trong nền
-echo "3. Khởi động Data Processer (processer.py) trong nền..."
-python src/processer.py &
-PROCESSER_PID=$!
-echo "   [INFO] Processer đã khởi động. PID: $PROCESSER_PID"
-
+# # 3. Chạy Data Processer (Python) trong nền
+# echo "3. Khởi động Data Processer (processer.py) trong nền..."
+# python src/processer.py &
+# PROCESSER_PID=$!
+# echo "   [INFO] Processer đã khởi động. PID: $PROCESSER_PID"
 # 4. Chạy Command Sender (Python Loop) trong nền
 echo "4. Khởi động Command Sender Loop (command_sender.py) trong nền..."
 python src/command_sender.py &
